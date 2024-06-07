@@ -68,12 +68,17 @@ def compare_reports(job_name, current_build_number, previous_build_number):
 
     return new_failures, existing_failures, fixed_failures
 
-def get_previous_build(job_name, build_number): 
-  while build_number > 1: 
-    if server.get_build_info(job_name, build_number)['result'] != 'ABORTED':
-      return build_number 
-    build_number -= 1
-  return None
+def find_previous_valid_build(job_name, current_number):
+    build_number = current_number - 1
+    while build_number >= 1:
+        try: 
+            build_info = server.get_build_info(job_name, build_number) 
+            if build_info['result'] not in ['ABORTED', None]:
+                return build_number
+        except jenkins.NotFoundException:
+            pass
+        build_number -= 1
+    return None
 
 try:
     server = jenkins.Jenkins(sys.argv[1], username=sys.argv[2], password=sys.argv[3])
