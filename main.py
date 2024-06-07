@@ -68,7 +68,7 @@ def compare_reports(job_name, current_build_number, previous_build_number):
 
     return new_failures, existing_failures, fixed_failures
 
-def find_previous_valid_build(job_name, current_number):
+def get_previous_build(job_name, current_number):
     build_number = current_number - 1
     while build_number >= 1:
         try: 
@@ -86,7 +86,7 @@ try:
     if server.job_exists(job_name):
         current_build_number = int(sys.argv[5])
                 
-        previous_build_number = get_previous_build(job_name, current_build_number - 1)
+        previous_build_number = get_previous_build(job_name, current_build_number)
         current_build_info = server.get_build_info(job_name, current_build_number)
         previous_build_info = server.get_build_info(job_name, previous_build_number)
         print("JOB NAME:",job_name)
