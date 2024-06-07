@@ -18,7 +18,7 @@ def extract_data(build_info):
         print("Failed Testcase:", fail_count)
         print("Skipped Testcase:", skip_count)
         print("Total Testcases:", total_count)
-        build_percentage = ((total_count - fail_count) * 100)/total_count
+        build_percentage = ((total_count - fail_count - skip_count) * 100)/total_count
         print("Passing percentage: {:.2f}".format(build_percentage))
     else:
         print("Testcases not found!")
