@@ -1,5 +1,5 @@
-import sys
 import jenkins
+import argparse
 
 def extract_data(build_info):
     fail_count = None
@@ -69,55 +69,66 @@ def compare_reports(job_name, current_build_number, previous_build_number):
     return new_failures, existing_failures, fixed_failures
 
 def get_previous_build(job_name, build_number):
-  build_number -= 1
-  while build_number >= 1: 
-    if server.get_build_info(job_name, build_number)['result'] != 'ABORTED':
-      return build_number 
     build_number -= 1
-  return None
+    while build_number >= 1:
+        if server.get_build_info(job_name, build_number)['result'] != 'ABORTED':
+            return build_number
+        build_number -= 1
+    return 0
 
-try:
-    server = jenkins.Jenkins(sys.argv[1], username=sys.argv[2], password=sys.argv[3])
-    job_name = sys.argv[4]
+
+parser = argparse.ArgumentParser()
+args_list = [ ('url',), ('username',), ('password',), ('build_number',), ('--jobs',) ]
+for arg in args_list:
+    parser.add_argument(*arg)
+args = parser.parse_args()
+server = jenkins.Jenkins(args.url,args.username,args.password)
+jobs = args.jobs.split(',')
+
+for job_name in jobs:
+    print("JOB NAME:",job_name)
     if server.job_exists(job_name):
-        current_build_number = int(sys.argv[5])
-                
-        previous_build_number = get_previous_build(job_name, current_build_number)
-        current_build_info = server.get_build_info(job_name, current_build_number)
-        previous_build_info = server.get_build_info(job_name, previous_build_number)
-        print("JOB NAME:",job_name)
+        try:
+            current_build_number = int(args.build_number)
+            current_build_info = server.get_build_info(job_name, current_build_number)
+            previous_build_number = get_previous_build(job_name, current_build_number)
+            previous_build_info = server.get_build_info(job_name, previous_build_number)
+            new_failures, existing_failures, fixed_failures = compare_reports(job_name, current_build_number, previous_build_number)
 
-        new_failures, existing_failures, fixed_failures = compare_reports(job_name, current_build_number, previous_build_number)
+            print("\n###### Current Build Summary ######\n")
+            extract_data(current_build_info)
+            print("BUILD STATUS:",server.get_build_info(job_name,current_build_number)['result'])
 
-        print("###### Current Build Summary ######\n")
-        extract_data(current_build_info)
-        print("BUILD STATUS:",server.get_build_info(job_name,current_build_number)['result'])
+            print("\n###### Previous Build Summary ######\n")
+            extract_data(previous_build_info)
+            print("BUILD STATUS:",server.get_build_info(job_name,previous_build_number)['result'])
 
-        print("\n###### Previous Build Summary ######\n")
-        extract_data(previous_build_info)
-        print("BUILD STATUS:",server.get_build_info(job_name,previous_build_number)['result'])
+            print("\n###### New Failures -",len(new_failures),"######\n")
+            if new_failures:
+                for test_class, test_name in new_failures:
+                    print(f"{test_class} - {test_name}")
+            else:
+                print("None")
 
-        print("\n###### New Failures -",len(new_failures),"######\n")
-        if new_failures:
-            for test_class, test_name in new_failures:
-                print(f"{test_class} - {test_name}")
-        else:
-            print("None")
+            print("\n###### Existing Failures -",len(existing_failures),"######\n")
 
-        print("\n###### Existing Failures -",len(existing_failures),"######\n")
-        if existing_failures:
-            for test_class, test_name in existing_failures:
-                print(f"{test_class} - {test_name}")
-        else:
-            print("None")
+            if existing_failures:
+                for test_class, test_name in existing_failures:
+                    print(f"{test_class} - {test_name}")
+            else:
+                print("None")
 
-        print("\n###### Fixed Failures -",len(fixed_failures),"######\n")
-        if fixed_failures:
-            for test_class, test_name in fixed_failures:
-                print(f"{test_class} - {test_name}")
-        else:
-            print("None")
+            print("\n###### Fixed Failures -",len(fixed_failures),"######\n")
+            if fixed_failures:
+                for test_class, test_name in fixed_failures:
+                    print(f"{test_class} - {test_name}")
+                print("\n*************************************************************************\n")
+            else:
+                print("None")
+                print("\n*************************************************************************\n")
+        except jenkins.JenkinsException as e:
+            print(e)
+            print("\n*************************************************************************\n")
     else:
         print("Job not found!")
-except jenkins.JenkinsException as e:
-    print(e)
+        print("\n*************************************************************************\n")
