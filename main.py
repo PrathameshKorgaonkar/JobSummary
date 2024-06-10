@@ -13,10 +13,9 @@ def extract_data(build_info):
             break
 
     if fail_count is not None and total_count is not None:
-        print("Build No:", build_info.get('number'))
-        print("Passed Testcase:", total_count - fail_count - skip_count)
-        print("Failed Testcase:", fail_count)
-        print("Skipped Testcase:", skip_count)
+        print("Passed Testcases:", total_count - fail_count - skip_count)
+        print("Failed Testcases:", fail_count)
+        print("Skipped Testcases:", skip_count)
         print("Total Testcases:", total_count)
         build_percentage = ((total_count - fail_count - skip_count) * 100)/total_count
         print("Passing percentage: {:.2f}".format(build_percentage))
@@ -89,17 +88,25 @@ for job_name in jobs:
     print("JOB NAME:",job_name)
     if server.job_exists(job_name):
         try:
-            current_build_number = int(args.build_number)
+            if len(jobs) == 1:
+                if args.build_number == '0':
+                    current_build_number = server.get_job_info(job_name)['lastBuild']['number']
+                else:
+                    current_build_number = int(args.build_number)
+            else:  
+                current_build_number = int(args.build_number) if args.build_number != '0' else server.get_job_info(job_name)['lastBuild']['number']
             current_build_info = server.get_build_info(job_name, current_build_number)
             previous_build_number = get_previous_build(job_name, current_build_number)
             previous_build_info = server.get_build_info(job_name, previous_build_number)
             new_failures, existing_failures, fixed_failures = compare_reports(job_name, current_build_number, previous_build_number)
 
             print("\n###### Current Build Summary ######\n")
+            print("Build Number:",current_build_number)
             extract_data(current_build_info)
             print("BUILD STATUS:",server.get_build_info(job_name,current_build_number)['result'])
 
             print("\n###### Previous Build Summary ######\n")
+            print("Build Number:",previous_build_number)
             extract_data(previous_build_info)
             print("BUILD STATUS:",server.get_build_info(job_name,previous_build_number)['result'])
 
