@@ -68,7 +68,8 @@ def compare_reports(job_name, current_build_number, previous_build_number):
 
     return new_failures, existing_failures, fixed_failures
 
-def get_previous_build(job_name, build_number): 
+def get_previous_build(job_name, build_number):
+  build_number -= 1
   while build_number >= 1: 
     if server.get_build_info(job_name, build_number)['result'] != 'ABORTED':
       return build_number 
@@ -81,14 +82,14 @@ try:
     if server.job_exists(job_name):
         current_build_number = int(sys.argv[5])
                 
-        previous_build_number = get_previous_build(job_name, current_build_number-1)
+        previous_build_number = get_previous_build(job_name, current_build_number)
         current_build_info = server.get_build_info(job_name, current_build_number)
         previous_build_info = server.get_build_info(job_name, previous_build_number)
         print("JOB NAME:",job_name)
 
         new_failures, existing_failures, fixed_failures = compare_reports(job_name, current_build_number, previous_build_number)
 
-        print("\n###### Current Build Summary ######\n")
+        print("###### Current Build Summary ######\n")
         extract_data(current_build_info)
         print("BUILD STATUS:",server.get_build_info(job_name,current_build_number)['result'])
 
