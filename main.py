@@ -72,6 +72,8 @@ def get_previous_build(job_name, build_number):
     while build_number >= 1:
         if server.get_build_info(job_name, build_number)['result'] != 'ABORTED':
             return build_number
+        else:
+            print("STATUS: Build number",build_number,"aborted.")
         build_number -= 1
     return 0
 
@@ -100,32 +102,31 @@ for job_name in jobs:
             previous_build_info = server.get_build_info(job_name, previous_build_number)
             new_failures, existing_failures, fixed_failures = compare_reports(job_name, current_build_number, previous_build_number)
 
-            print("\n###### Current Build Summary ######\n")
+            print("\n######################### Current Build Summary #########################\n")
             print("Build Number:",current_build_number)
             extract_data(current_build_info)
             print("BUILD STATUS:",server.get_build_info(job_name,current_build_number)['result'])
 
-            print("\n###### Previous Build Summary ######\n")
+            print("\n######################### Previous Build Summary ########################\n")
             print("Build Number:",previous_build_number)
             extract_data(previous_build_info)
             print("BUILD STATUS:",server.get_build_info(job_name,previous_build_number)['result'])
 
-            print("\n###### New Failures -",len(new_failures),"######\n")
+            print("\n########################## New Failures -",len(new_failures),"###########################\n")
             if new_failures:
                 for test_class, test_name in new_failures:
                     print(f"{test_class} - {test_name}")
             else:
                 print("None")
 
-            print("\n###### Existing Failures -",len(existing_failures),"######\n")
-
+            print("\n####################### Existing Failures -",len(existing_failures),"#########################\n")
             if existing_failures:
                 for test_class, test_name in existing_failures:
                     print(f"{test_class} - {test_name}")
             else:
                 print("None")
 
-            print("\n###### Fixed Failures -",len(fixed_failures),"######\n")
+            print("\n######################### Fixed Failures -",len(fixed_failures),"##########################\n")
             if fixed_failures:
                 for test_class, test_name in fixed_failures:
                     print(f"{test_class} - {test_name}")
