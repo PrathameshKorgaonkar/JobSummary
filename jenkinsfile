@@ -1,0 +1,24 @@
+pipeline {
+    agent { label 'Linux-Node-v1' }
+ 
+    environment {
+        REPO_URL = 'https://github.com/PrathameshKorgaonkar/JobSummary.git'
+        BRANCH = 'main'
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                git branch: "${BRANCH}", url: "${REPO_URL}"
+            }
+        }
+ 
+        stage('Build') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: '1b6eb6ed-402e-4b23-8c47-c03b2e6ea18a', usernameVariable: 'J_USERNAME', passwordVariable: 'J_PASSWORD')]) {
+                    sh 'python3 main.py $JENKINS_URL $J_USERNAME $J_PASSWORD "${BUILDNUMBER}" --jobs "$JOBS"'
+                }
+            }
+        }
+    }
+}
